@@ -1,0 +1,57 @@
+#include "stm32f446xx.h"
+#include <stdint.h>
+
+// simple delay function (blokcing)
+void delay_ms(volatile uint32_t  delay)
+{
+
+    for (volatile uint32_t i = 0; i <delay * 4000; i++);
+        // tuned approx. for 16 MHz (adjust for your clock)
+
+}
+
+void gpio_init(void)
+{
+    // 1. Enable GPIOA clock (bit 0 in AHB1ENR)
+    RCC->AHB1ENR |= (1 << 0);
+
+    // 2. Set PA5 as General Purpose Output Mode
+    GPIOA->MODER &= ~(3 << (5 * 2)); // clear
+    GPIOA->MODER |=  (1 << (5 * 2)); // set as output
+
+    // 3. Push-pull (default), No pull-up/pull-down (default)
+}
+
+// 1. led blinking example 
+
+// int main(void)
+// {
+//     gpio_init();
+
+//     for(int i = 0; i <10 ; i++) // blink the led 10 times
+//     {
+//         GPIOA->ODR ^= GPIO_ODR_OD5; // toggling the led
+//         delay_ms(500); // addign a delay 
+//     }
+
+//     while(1); // stop here
+// }
+
+
+int main(void)
+{
+    gpio_init();
+
+    uint32_t counter = 0;
+
+    while (1)
+    {
+        counter++;
+
+        if (counter >= 5000)   // When counter reaches a threshold
+        {
+            GPIOA->ODR ^= (1 << 5);  // Toggle LED
+            counter = 0;             // Reset counter
+        }
+    }
+}

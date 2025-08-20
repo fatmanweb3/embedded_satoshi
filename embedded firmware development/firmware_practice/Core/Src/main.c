@@ -1,0 +1,228 @@
+#include "stm32f446xx.h"
+#include <stdint.h>
+
+#define LED_PORT GPIOA
+#define LED_PIN  5
+// simple delay function (blokcing)
+void delay_ms(volatile uint32_t  delay)
+{
+
+    for (volatile uint32_t i = 0; i <delay * 4000; i++);
+        // tuned approx. for 16 MHz (adjust for your clock)
+
+}
+
+void gpio_init(void)
+{
+    // 1. Enable GPIOA clock (bit 0 in AHB1ENR)
+    RCC->AHB1ENR |= (1 << 0);
+
+    // 2. Set PA5 as General Purpose Output Mode
+    GPIOA->MODER &= ~(3 << (5 * 2)); // clear
+    GPIOA->MODER |=  (1 << (5 * 2)); // set as output
+
+    // 3. Push-pull (default), No pull-up/pull-down (default)
+}
+
+// 1. led blinking example 
+
+// int main(void)
+// {
+//     gpio_init();
+
+//     for(int i = 0; i <10 ; i++) // blink the led 10 times
+//     {
+//         GPIOA->ODR ^= GPIO_ODR_OD5; // toggling the led
+//         delay_ms(500); // addign a delay 
+//     }
+
+//     while(1); // stop here
+// }
+
+// 2. led blink using an while and if condition
+
+// int main(void)
+// {
+//     gpio_init();
+
+//     uint32_t counter = 0;
+
+//     while (1)
+//     {
+//         counter++;
+
+//         if (counter >= 500000)   // When counter reaches a threshold
+//         {
+//             GPIOA->ODR ^= (1 << 5);  // Toggle LED
+//             counter = 0;             // Reset counter
+//         }
+//     }
+// }
+
+// 3. led blinking using an fsm and switch case
+
+// int main(void)
+// {
+//     gpio_init();
+
+//     uint8_t state = 0; // 0 = off 1 = on
+
+
+//     while (1)
+//     {
+//         switch (state)
+//         {
+//             case 0: // led off
+//                 GPIOA->ODR &= ~GPIO_ODR_OD5;
+//                 delay_ms(500);
+//                 state = 1; // next state ON
+//                 /* code */
+
+//                 break;
+
+//             case 1:
+//                 GPIOA->ODR |= GPIO_ODR_OD5;
+//                 delay_ms(500);
+
+//                 state = 0; // next state off
+//                 break;
+        
+//         default:
+//             state = 0;
+//             break;
+//         }
+//     }
+
+// }
+
+//-----------------POINTER & VOLATILE-----------------
+
+//1. Use pointer dereference to access GPIOA->ODR
+// int main(void)
+// {
+//     gpio_init();
+
+//     // pointer to gpioa odr register (address = base + 0x14)
+
+//     volatile uint32_t *pODR = (uint32_t *)(GPIOA_BASE + 0x14);
+
+//     while (1)
+//     {
+//         /* code */
+//         *pODR |= (1 << 5); // setting the bit 5( led on)
+//         delay_ms(500);
+
+//         *pODR &= ~(1 << 5); // setting the bit 5( led on)
+//         delay_ms(500);
+
+//     }
+    
+// }
+
+
+//2. Use volatile variable in a loop
+
+// int main(void)
+// {
+//     gpio_init();
+
+//     volatile uint32_t toggle = 0; // volatile variable
+
+//     while(1)
+//     {
+//         if (toggle == 0)
+//         {
+//             GPIOA->ODR |= (1 << 5); // LED ON
+//             toggle = 1;
+//         }
+
+//         else
+//         {
+//             GPIOA->ODR &= ~(1 << 5); // LED OFF
+//             toggle = 0;
+//         }
+
+//         delay_ms(500);
+//     }
+// }
+
+//3.  Use macros (#define) for LED control
+
+// int main(void)
+// {
+//     gpio_init();
+
+//     while(1)
+//     {
+//         // toggle led using bit manipulation
+
+//         LED_PORT->ODR ^= ( 1 << LED_PIN);
+
+//         delay_ms(500);
+//     }
+// }
+
+//----------------------STRUCTS & ABSTRACTION----------------
+//1. usign struct for gpio registers
+
+// typedef struct
+// {
+//     volatile uint32_t MODER;   // 0x00
+//     volatile uint32_t OTYPER;  // 0x04
+//     volatile uint32_t OSPEEDR; // 0x08
+//     volatile uint32_t PUPDR;   // 0x0C
+//     volatile uint32_t IDR;     // 0x10
+//     volatile uint32_t ODR;     // 0x14
+//     volatile uint32_t BSRR;    // 0x18
+//     volatile uint32_t LCKR;    // 0x1C
+//     volatile uint32_t AFRL;    // 0x20
+//     volatile uint32_t AFRH;    // 0x24
+// } GPIO_RegDef_t;
+
+// #define GPIOA_BASE   0x40020000UL
+// #define GPIOA        ((GPIO_RegDef_t*) GPIOA_BASE)
+
+
+// // int main(void)
+// // {
+//     gpio_init();
+
+//     while (1)
+//     {
+//         GPIOA->ODR ^= (1 << 5);   // Toggle LED using struct
+//         delay_ms(500);
+//     }
+// }
+
+//2. Abstract LED control with functions
+
+// void LED_On(void)
+// {
+//     GPIOA->ODR |= (1 << 5);
+// }
+
+// void LED_Off(void)
+// {
+//     GPIOA->ODR &= ~(1 << 5);
+// }
+
+// void LED_Toggle(void)
+// {
+//     GPIOA->ODR ^= (1 << 5);
+// }
+
+// int main(void)
+// {
+//     gpio_init();
+
+//     while (1)
+//     {
+//         LED_On();
+//         delay_ms(500);
+//         LED_Off();
+//         delay_ms(500);
+//     }
+// }
+
+
+// 3. 
